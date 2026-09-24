@@ -14,7 +14,7 @@ A single-page, zero-dependency, fully static portfolio — built to be hosted **
 ## ✨ Features
 
 - 🖥️ **Terminal / cyber aesthetic** — hero typing effect, `zsh`-style intro card, `nmap` about card, boot preloader
-- 🌐 **Animated particle network** background (respects `prefers-reduced-motion`)
+- 🌐 **Animated blockchain chain background** — hex grid + drifting chain-linked blocks with hashes (respects `prefers-reduced-motion`)
 - 📊 **Live-style stats counters** — repos, stars, followers, protocols secured
 - 🛡️ **Highlights section** — Bedrock uniBTC critical bug, Q1 2025 multi-protocol disclosures
 - 🛠 **Skills bars + toolbelt chips** (Solidity, Foundry, Slither, Echidna, Go, Python …)
