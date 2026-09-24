@@ -16,72 +16,151 @@
   // Safety: never let preloader block the page
   setTimeout(() => preloader && preloader.classList.add('hidden'), 3500);
 
-  /* ---------------- PARTICLE NETWORK CANVAS ---------------- */
+  /* ---------------- BLOCKCHAIN CHAIN BACKGROUND ---------------- */
   const canvas = $('#bg-net');
   let ctx, particles = [];
   if (canvas) {
     ctx = canvas.getContext('2d');
-    let w, h, raf;
-    const count = () => Math.max(26, Math.min(80, Math.floor(window.innerWidth / 22)));
+    let w, h, raf, t = 0;
+
+    const HASH_CH = '0123456789abcdef';
+    const randHash = (len) => {
+      let s = '';
+      for (let i = 0; i < len; i++) s += HASH_CH[Math.floor(Math.random() * HASH_CH.length)];
+      return s;
+    };
+
+    // ---- chain blocks ----
+    const BLOCK_W = 172, BLOCK_H = 92;
+    const blocks = [];
+    for (let i = 0; i < 18; i++) {
+      blocks.push({
+        n: 1024 + Math.floor(Math.random() * 6000),
+        hash: randHash(10),
+        prev: randHash(10),
+        tx: 128 + Math.floor(Math.random() * 3800),
+        time: String(Math.floor(Math.random() * 24)).padStart(2, '0') + ':' + String(Math.floor(Math.random() * 60)).padStart(2, '0'),
+      });
+    }
+
+    // ---- floating emission particles ----
+    const seedParticles = () => {
+      const count = Math.max(14, Math.min(40, Math.floor(w / 48)));
+      particles = Array.from({ length: count }, () => ({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        r: Math.random() * 1.3 + 0.5,
+        vx: (Math.random() - 0.5) * 0.25,
+        vy: (Math.random() - 0.5) * 0.25,
+        green: Math.random() > 0.55,
+      }));
+    };
+    seedParticles();
 
     const resize = () => {
       w = canvas.width = window.innerWidth;
       h = canvas.height = window.innerHeight;
+      seedParticles();
     };
     resize();
     window.addEventListener('resize', resize);
 
-    class P {
-      constructor() {
-        this.x = Math.random() * w;
-        this.y = Math.random() * h;
-        this.r = Math.random() * 1.6 + 0.4;
-        this.vx = (Math.random() - 0.5) * 0.35;
-        this.vy = (Math.random() - 0.5) * 0.35;
-        this.cyan = Math.random() > 0.5;
-      }
-      move() {
-        this.x += this.vx;
-        this.y += this.vy;
-        if (this.x < 0 || this.x > w) this.vx *= -1;
-        if (this.y < 0 || this.y > h) this.vy *= -1;
-      }
-      draw() {
+    const drawParticles = () => {
+      particles.forEach((p) => {
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < -10) p.x = w + 10; else if (p.x > w + 10) p.x = -10;
+        if (p.y < -10) p.y = h + 10; else if (p.y > h + 10) p.y = -10;
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
-        ctx.fillStyle = this.cyan ? 'rgba(0,229,255,.7)' : 'rgba(0,255,157,.7)';
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = p.green ? 'rgba(0,255,157,.5)' : 'rgba(0,229,255,.5)';
         ctx.fill();
-      }
-    }
-
-    const seed = () => { particles = Array.from({ length: count() }, () => new P()); };
-    seed();
-
-    const LINK_DIST = 130;
-    const tick = () => {
-      ctx.clearRect(0, 0, w, h);
-      particles.forEach((p) => { p.move(); p.draw(); });
-      for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
-          const a = particles[i], b = particles[j];
-          const dx = a.x - b.x, dy = a.y - b.y;
-          const d2 = dx * dx + dy * dy;
-          if (d2 < LINK_DIST * LINK_DIST) {
-            const alpha = (1 - Math.sqrt(d2) / LINK_DIST) * 0.35;
-            ctx.beginPath();
-            ctx.moveTo(a.x, a.y);
-            ctx.lineTo(b.x, b.y);
-            ctx.strokeStyle = `rgba(0,229,255,${alpha})`;
-            ctx.lineWidth = 0.6;
-            ctx.stroke();
-          }
-        }
-      }
-      raf = requestAnimationFrame(tick);
+      });
     };
 
-    if (!reduceMotion) tick();
-    else { particles.forEach((p) => p.draw()); }
+    const mono = "'JetBrains Mono', monospace";
+
+    const roundRectPath = (x, y, ww, hh, r) => {
+      ctx.beginPath();
+      if (typeof ctx.roundRect === 'function') ctx.roundRect(x, y, ww, hh, r);
+      else ctx.rect(x, y, ww, hh);
+    };
+
+    const drawBlock = (x, y, b) => {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(0,229,255,.55)';
+      ctx.fillStyle = 'rgba(0,229,255,.04)';
+      roundRectPath(x, y, BLOCK_W, BLOCK_H, 12);
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = 'rgba(0,229,255,.10)';
+      ctx.fillRect(x, y, BLOCK_W, 20);
+      ctx.fillStyle = 'rgba(0,255,157,.8)';
+      ctx.font = '700 11px ' + mono;
+      ctx.textAlign = 'center';
+      ctx.fillText('BLOCK #' + b.n, x + BLOCK_W / 2, y + 14);
+      ctx.fillStyle = 'rgba(0,229,255,.85)';
+      ctx.font = '10px ' + mono;
+      ctx.textAlign = 'left';
+      ctx.fillText(b.hash, x + 12, y + 39);
+      ctx.fillStyle = 'rgba(120,140,165,.75)';
+      ctx.fillText('prev ' + b.prev.slice(0, 6) + '…', x + 12, y + 55);
+      ctx.fillText('tx ' + b.tx + '  ·  ' + b.time, x + 12, y + 71);
+      ctx.restore();
+    };
+
+    const drawLink = (x1, y1, x2, y2) => {
+      const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+      ctx.save();
+      ctx.strokeStyle = 'rgba(0,229,255,.5)';
+      ctx.lineWidth = 1.1;
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      ctx.strokeStyle = 'rgba(0,255,157,.5)';
+      for (let k = -1; k <= 1; k++) {
+        ctx.save();
+        ctx.translate(mx + k * 15, my);
+        ctx.rotate(0.5);
+        ctx.scale(1, 1.45);
+        ctx.beginPath();
+        ctx.arc(0, 0, 8, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+      ctx.restore();
+    };
+
+    const drawRow = (yBase, alphaMul, phase, start) => {
+      const spacing = 226;
+      const amp = 30;
+      const off = (t * 11 + phase) % spacing;
+      ctx.save();
+      ctx.globalAlpha = 0.16 * alphaMul;
+      for (let i = 0; i < blocks.length; i++) {
+        const b = blocks[(i + start) % blocks.length];
+        const x = i * spacing - off;
+        if (x < -BLOCK_W - 60 || x > w + 60) continue;
+        const y = yBase + Math.sin(i * 0.5 + t * 0.045) * amp;
+        if (y < -BLOCK_H || y > h + BLOCK_H) continue;
+        if (i > 0) {
+          const xp = i * spacing - spacing - off;
+          const yp = yBase + Math.sin((i - 1) * 0.5 + t * 0.045) * amp;
+          drawLink(xp + BLOCK_W, yp, x, y);
+        }
+        drawBlock(x, y, b);
+      }
+      ctx.restore();
+    };
+
+    const frame = () => {
+      t += 1;
+      ctx.clearRect(0, 0, w, h);
+      drawParticles();
+      drawRow(h * 0.40, 0.55, 0, 0);
+      drawRow(h * 0.72, 0.45, 90, 6);
+      drawRow(h * 1.02, 0.30, 180, 12);
+      raf = requestAnimationFrame(frame);
+    };
+
+    if (!reduceMotion) frame();
+    else { drawParticles(); drawRow(h * 0.40, 0.55, 0, 0); drawRow(h * 0.72, 0.45, 90, 6); }
   }
 
   /* ---------------- TYPED TEXT EFFECT ---------------- */

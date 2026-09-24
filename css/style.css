@@ -40,8 +40,21 @@ a { text-decoration: none; color: inherit; }
 .container { width: min(1180px, 92%); margin: 0 auto; }
 .mono { font-family: var(--font-mono); }
 
-/* --- background canvas + glows --- */
-#bg-net { position: fixed; inset: 0; width: 100%; height: 100%; z-index: -2; opacity: .75; pointer-events: none; }
+/* --- background: hex-grid + blockchain chain canvas + glows --- */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -3;
+  pointer-events: none;
+  background:
+    linear-gradient(rgba(0,229,255,.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,255,.05) 1px, transparent 1px);
+  background-size: 46px 46px;
+  -webkit-mask-image: radial-gradient(ellipse 85% 75% at 50% 40%, #000, transparent 82%);
+  mask-image: radial-gradient(ellipse 85% 75% at 50% 40%, #000, transparent 82%);
+}
+#bg-net { position: fixed; inset: 0; width: 100%; height: 100%; z-index: -2; opacity: .9; pointer-events: none; }
 .bg-glow { position: fixed; border-radius: 50%; z-index: -1; pointer-events: none; filter: blur(90px); opacity: .22; }
 .glow-a { width: 640px; height: 640px; background: radial-gradient(circle, rgba(0,229,255,.25), transparent 70%); top: -120px; left: -140px; }
 .glow-b { width: 760px; height: 760px; background: radial-gradient(circle, rgba(0,255,157,.18), transparent 70%); bottom: -200px; right: -160px; }
